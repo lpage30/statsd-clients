@@ -1,0 +1,8 @@
+
+.DS_Store
+
+### ides ###
+*.vscode/*
+!.vscode/launch.json
+!setup.cfg
+*.idea
