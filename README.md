@@ -1,1 +1,3 @@
-# statsd-cpp-client
+# statsd-clients
+
+## C++ single-threaded client
