@@ -11,12 +11,13 @@
 namespace statsd {
     StatsDClient::StatsDClient(StatsDConnection* pconnection) : m_pConnection(pconnection)
     {}
+
     StatsDClient::~StatsDClient()
     {
-        m_pConnection->close();
+        close();
     }
     
-    int StatsDClient::config(
+    bool StatsDClient::open(
         const string& host,
         const short port,
         const string& ns,
@@ -25,11 +26,28 @@ namespace statsd {
     {
         return m_pConnection->open(host, port, ns, tags);
     }
+
+    bool StatsDClient::isOpen() const
+    {
+        return m_pConnection->isOpen();
+    }
+
+    void StatsDClient::close()
+    {
+        m_pConnection->close();
+    }
+
+    bool StatsDClient::hasError() const
+    {
+        return m_pConnection->hasError();
+    }
+
     string StatsDClient::getLastError(bool clearError)
     {
         return m_pConnection->getLastError(clearError);
     }
-    int StatsDClient::count(
+
+    bool StatsDClient::count(
         const char* key,
         size_t value,
         const vector<pair<string, string>>& tags
@@ -37,7 +55,8 @@ namespace statsd {
     {
         return m_pConnection->send(key, value, "c", tags);
     }
-    int StatsDClient::histogram(
+
+    bool StatsDClient::histogram(
         const char* key,
         size_t value,
         const vector<pair<string, string>>& tags
@@ -45,7 +64,8 @@ namespace statsd {
     {
         return m_pConnection->send(key, value, "h", tags);
     }
-    int StatsDClient::timing(
+
+    bool StatsDClient::timing(
         const char* key,
         size_t ms,
         const vector<pair<string, string>>& tags
@@ -59,5 +79,4 @@ namespace statsd {
         static StatsDClient instance(new SingleThreadedStatsDConnection());
         return instance;
     }
-
 };

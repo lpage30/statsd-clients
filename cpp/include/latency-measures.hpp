@@ -7,7 +7,7 @@ class LatencyMeasure
     virtual ~LatencyMeasure()
     {}
 
-    virtual void start()
+    virtual void begin()
     {
         m_isSet = 1;
     }
@@ -41,10 +41,10 @@ class RegularLatencyMeasure: LatencyMeasure
     {}
     virtual ~RegularLatencyMeasure() {}
 
-    virtual void start()
+    virtual void begin()
     {
-        LatencyMeasure::start();
-        m_start = std::chrono::system_clock::now();
+        LatencyMeasure::begin();
+        m_begin = std::chrono::system_clock::now();
     }
     virtual void end()
     {
@@ -54,12 +54,12 @@ class RegularLatencyMeasure: LatencyMeasure
     virtual size_t latency_ms() const
     {
         if (hasLatency())
-            return std::chrono::duration_cast<std::chrono::milliseconds>(m_end - m_start).count();
+            return std::chrono::duration_cast<std::chrono::milliseconds>(m_end - m_begin).count();
         return (size_t)-1;            
     }
 
     protected:
-    std::chrono::system_clock::time_point m_start;
+    std::chrono::system_clock::time_point m_begin;
     std::chrono::system_clock::time_point m_end;
 };
 
@@ -71,10 +71,10 @@ class HighResolutionLatencyMeasure: LatencyMeasure
     virtual ~HighResolutionLatencyMeasure()
     {}
 
-    virtual void start()
+    virtual void begin()
     {
-        LatencyMeasure::start();
-        m_start = std::chrono::high_resolution_clock::now();
+        LatencyMeasure::begin();
+        m_begin = std::chrono::high_resolution_clock::now();
     }
     virtual void end()
     {
@@ -84,11 +84,11 @@ class HighResolutionLatencyMeasure: LatencyMeasure
     virtual size_t latency_ms() const
     {
         if (hasLatency())
-            return std::chrono::duration_cast<std::chrono::milliseconds>(m_end - m_start).count();
+            return std::chrono::duration_cast<std::chrono::milliseconds>(m_end - m_begin).count();
         return (size_t)-1;
     }
 
     protected:
-    std::chrono::high_resolution_clock::time_point m_start;
+    std::chrono::high_resolution_clock::time_point m_begin;
     std::chrono::high_resolution_clock::time_point m_end;
 };

@@ -17,35 +17,25 @@ namespace statsd {
         {
             init();
         }
-        virtual void SingleThreadedStatsDConnection::close()
-        {
-            if (-1 != m_sock)
-            {
-                ::close(m_sock);
-                init();
 
-            }
-        }
-
-        virtual int SingleThreadedStatsDConnection::open(
-            const string& newHost,
-            const short newPort,
-            const string& newNS,
+        virtual bool open(
+            const string& host,
+            const short port,
+            const string& ns,
             const vector<pair<string, string>>& tags = {}
         )
         {
             stringstream errorStream;
+
             close();
-            m_host = newHost;
-            m_port = newPort;
-            m_ns = newNS;
-            m_tags = formatTags(tags);
+            configure(host, port, ns, tags);
+
             m_sock =  socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
             if (m_sock == -1 ) {
                 int err = errno;
                 errorStream << "Error creating socket, err=" << strerror(err);
                 m_lastError = errorStream.str();
-                return -1;
+                return false;
             }
             m_server.sin_family = AF_INET;
             m_server.sin_port = htons(m_port);
@@ -64,48 +54,48 @@ namespace statsd {
                     errorStream << "Error calling getaddrinfo, error=" << ret << ", msg=" << gai_strerror(ret);
                     close();
                     m_lastError = errorStream.str();
-                    return -2;
+                    return false;
                 }
                 struct sockaddr_in* host_addr = (struct sockaddr_in*)result->ai_addr;
                 memcpy(&m_server.sin_addr, &host_addr->sin_addr, sizeof(struct in_addr));
                 freeaddrinfo(result);
             }
-            return 0;            
+            return true;            
+        }
+        virtual bool isOpen() const
+        {
+            return -1 != m_sock;
         }
 
-        virtual string SingleThreadedStatsDConnection::getLastError(bool clearError = true)
-        {   string result = m_lastError;
-            if (clearError)
-            {
-                m_lastError.clear();
-            }
-            return result;
+        virtual void close()
+        {
+            if (-1 != m_sock)
+                ::close(m_sock);
+            init();
         }
 
         protected:
-        void SingleThreadedStatsDConnection::init()
+        void init()
         {
             m_sock = -1;
             memset(&m_server, 0x00, sizeof(m_server));
             memset(m_send_buffer,0x00, sizeof(m_send_buffer));
-            m_ns = "";
-            m_host = "";
-            m_port = -1;
-            m_lastError = "";
-            m_tags.clear();
+            configure();
         }
-        virtual pair<char*, size_t> SingleThreadedStatsDConnection::getSendBuffer()
+
+        virtual pair<char*, size_t> getSendBuffer()
         {
-            return make_pair(m_send_buffer, sizeof(m_send_buffer));
+            return { m_send_buffer, sizeof(m_send_buffer) };
 
         }
-        virtual int SingleThreadedStatsDConnection::send(const pair<char*, size_t>& message)
+
+        virtual bool send(const pair<char*, size_t>& message)
         {
             stringstream errorStream;
             if (-1 != m_sock)
             {
                 m_lastError = "StatsDConnection not open.";
-                return -1;
+                return false;
             }
             int ret = sendto(m_sock, message.first, message.second, 0, (struct sockaddr *) &m_server, sizeof(m_server));
             if (ret == -1) 
@@ -113,15 +103,14 @@ namespace statsd {
                 int err = errno;
                 errorStream << "Error sending " << message.second << " udp message to " << m_host << ":" << m_port << ", err=" << strerror(err);
                 m_lastError = errorStream.str();
-                return -2;
+                return false;
             }
-            return 0;
+            return true;
         }            
 
         protected:        
-        int     m_sock;
+        int                 m_sock;
         struct  sockaddr_in m_server;
-        string m_lastError;
-        char m_send_buffer[MAX_STATSD_BUFFER_SIZE];
+        char                m_send_buffer[MAX_STATSD_BUFFER_SIZE];
     };
 };

@@ -9,26 +9,34 @@ namespace statsd
         public:
         StatsDClient(StatsDConnection* pconnection);
         virtual ~StatsDClient();
-        int config(
+
+        bool open(
             const string& host,
             const short port,
             const string& ns,
             const vector<pair<string, string>>& tags = {}
         );
 
+        bool isOpen() const;
+
+        void close();
+
+        bool hasError() const;
         string getLastError(bool clearError = true);
     
-        int count(
+        bool count(
             const char* key, 
             size_t value = 1,
             const vector<pair<string, string>>& tags = {}
         );
-        int histogram(
+
+        bool histogram(
             const char* key, 
             size_t value = 1,
             const vector<pair<string, string>>& tags = {}
         );
-        int timing(
+
+        bool timing(
             const char* key,
             size_t ms,
             const vector<pair<string, string>>& tags = {}
@@ -40,5 +48,4 @@ namespace statsd
         public:
         static StatsDClient& getInstance();
     };
-    
 };

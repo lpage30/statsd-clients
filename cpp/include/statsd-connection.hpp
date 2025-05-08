@@ -9,27 +9,45 @@ namespace statsd
         public: 
         virtual ~StatsDConnection() { close(); }
 
-        virtual void close() = 0;
-        virtual int open(
-            const string& newHost,
-            const short newPort,
-            const string& newNS,
-            const vector<pair<string, string>>& tags = vector<pair<string, string>>()
+        virtual bool open(
+            const string& host,
+            const short port,
+            const string& ns,
+            const vector<pair<string, string>>& tags = {}
         ) = 0;
-        virtual string getLastError(bool clearError = true) = 0;
-        int send(const char* key, size_t value, const char* type, const vector<pair<string, string>>& tags = {});
+        
+        virtual bool isOpen() const = 0;
+        
+        virtual void close() = 0;
+
+        bool send(
+            const char* key,
+            size_t value,
+            const char* type,
+            const vector<pair<string, string>>& tags = {}
+        );
+
+        bool hasError() const;
+        string getLastError(bool clearError = true);
 
         protected:
         StatsDConnection() : m_port(-1) {}
+
+        void configure(
+            const string& host = "",
+            const short port = -1,
+            const string& ns = "",
+            const vector<pair<string, string>>& tags = {}
+        );
+
         virtual pair<char*, size_t> getSendBuffer() = 0;
-        virtual int send(const pair<char*, size_t>& message) = 0;
-        static string formatTags(const vector<pair<string, string>>& tags);
+        virtual bool send(const pair<char*, size_t>& message) = 0;
 
         protected:
         string  m_tags;
         string  m_ns;
         string  m_host;
         short   m_port;
-
+        string  m_lastError;
     };
 }
